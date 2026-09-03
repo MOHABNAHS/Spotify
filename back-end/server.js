@@ -1,10 +1,21 @@
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const cors = require("cors");
 require("dotenv").config();
 const pool = require("./db");
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+// [GET] /api/audio
+app.get("/api/audio", async (req, res) => {
+  const audioPath = path.join(__dirname, "../react/front-end/public/audio");
+
+  const files = fs.readdirSync(audioPath);
+
+  res.json(files);
+});
 
 // [GET] /api/songs
 app.get("/api/songs", async (req, res) => {

@@ -56,3 +56,26 @@ nav p {
 nav p:hover {
   color: white;
 }
+.song-card {
+  background: #282828;
+  padding: 16px;
+  margin-top: 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.song-card p {
+  color: #b3b3b3;
+  margin-top: 5px;
+}
+
+.song-card button {
+  border: none;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  cursor: pointer;
+  font-size: 18px;
+}

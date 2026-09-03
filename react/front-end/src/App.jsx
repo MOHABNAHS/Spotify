@@ -2,12 +2,21 @@ import { useEffect, useState } from "react";
 
 function App() {
   const [songs, setSongs] = useState([]);
+  const [audioFiles, setAudioFiles] = useState([]);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/songs")
       .then((response) => response.json())
       .then((data) => {
         setSongs(data);
+      });
+  }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/audio")
+      .then((response) => response.json())
+      .then((data) => {
+        setAudioFiles(data);
       });
   }, []);
 
@@ -26,10 +35,13 @@ function App() {
       <main>
         <h1>Spotify</h1>
 
-        {songs.map((song) => (
-          <div key={song.id}>
-            <h3>{song.title}</h3>
-            <p>{song.artist}</p>
+        {audioFiles.map((file) => (
+          <div className="song-card" key={file}>
+            <div>
+              <h3>{file}</h3>
+            </div>
+
+            <audio controls src={`/audio/${file}`}></audio>
           </div>
         ))}
       </main>
