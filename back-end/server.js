@@ -1,119 +1,124 @@
 const express = require("express");
+require("dotenv").config();
+const pool = require("./db");
 const app = express();
 app.use(express.json());
 
-const songs = [
-  {
-    id: 1,
-    title: "song 1",
-    artist: "artist 1",
-    audio: "/audio/song1.mp3",
-  },
-  {
-    id: 2,
-    title: "song 2",
-    artist: "artist 2",
-    audio: "/audio/song2.mp3",
-  },
-];
-
 // [GET] /api/songs
 app.get("/api/songs", async (req, res) => {
-  res.json(songs);
+  const result = await pool.query("SELECT * FROM songs");
+
+  if (result.rows.length === 0) {
+    return res.status(501).json({
+      error: "[ERROR][GET] /api/songs",
+    });
+  }
+
+  res.json(result.rows);
 });
 
 // [GET] /api/songs/:id
 app.get("/api/songs/:id", async (req, res) => {
   const id = Number(req.params.id);
 
-  const song = songs.find((song) => song.id === id);
+  const result = await pool.query("SELECT * FROM songs WHERE id = $1", [id]);
 
-  res.json({
-    song,
-  });
+  if (result.rows.length === 0) {
+    return res.status(501).json({
+      error: "[ERROR][GET] /api/songs/:id",
+    });
+  }
+
+  res.json(result.rows[0]);
 });
 
 // [POST] /api/songs
 app.post("/api/songs", async (req, res) => {
   const { title, artist, audio } = req.body;
 
-  const newSong = {
-    id: Math.max(...songs.map((song) => song.id)) + 1,
-    title,
-    artist,
-    audio,
-  };
+  const result = await pool.query(
+    "INSERT INTO songs (title, artist, audio) VALUES ($1, $2, $3) RETURNING *",
+    [title, artist, audio],
+  );
 
-  songs.push(newSong);
+  if (result.rows.length === 0) {
+    return res.status(501).json({
+      error: "[ERROR][POST] /api/songs",
+    });
+  }
 
-  res.status(201).json({ newSong });
+  res.status(201).json(result.rows);
 });
 
 // [PUT] /api/songs/:id
 app.put("/api/songs/:id", async (req, res) => {
   const id = Number(req.params.id);
 
-  const song = songs.findIndex((song) => song.id === id);
+  const { title, artist, audio } = req.body;
 
-  if (song === -1) {
+  const result = await pool.query(
+    "UPDATE songs SET title = $1 , artist = $2 , audio = $3 WHERE id = $4 RETURNING *",
+    [title, artist, audio, id],
+  );
+
+  if (result.rows.length === 0) {
     return res.status(404).json({
-      error: "song not found",
+      error: "[ERROR][PUT] /api/songs/:id",
     });
   }
 
-  const { title, artist, audio } = req.body;
-
-  song.title = title;
-  song.artist = artist;
-  song.audio = audio;
-
-  res.json(song);
+  res.status(200).json(result.rows);
 });
 
 // [DELETE] /api/songs/:id
 app.delete("/api/songs/:id", async (req, res) => {
   const id = Number(req.params.id);
 
-  const song = songs.findIndex((song) => song.id === id);
+  const result = await pool.query(
+    "DELETE FROM songs WHERE id = $1 RETURNING *",
+    [id],
+  );
 
-  if (!song) {
+  if (result.rows.length === 0) {
     return res.status(404).json({
-      error: "song not found",
+      error: "[ERROR][DELETE] /api/songs/:id",
     });
   }
 
-  const deletedSong = songs.splice(song, 1);
-
   res.json({
     message: "song deleted",
-    song: deletedSong[0],
+    song: result.rows[0],
   });
 });
 
 // [PATCH] /api/songs/:id
 app.patch("/api/songs/:id", async (req, res) => {
   const id = Number(req.params.id);
+  const { title, artist } = req.body;
 
-  const song = songs.findIndex((song) => song.id === id);
+  const result = await pool.query(
+    "UPDATE songs SET title = $1 , artist = $2 WHERE id = $3 RETURNING *",
+    [title, artist, id],
+  );
 
-  if (song === -1) {
+  if (result.rows.length === 0) {
     return res.status(404).json({
       error: "song not found",
     });
   }
 
-  const { title, artist } = req.body;
-
-  if (title !== undefined) {
-    song.title = title;
-  }
-
-  if (artist !== undefined) {
-    song.artist = artist;
-  }
-
-  res.json(song);
+  res.status(200).json(result.rows);
 });
+
+pool
+  .query("SELECT NOW()")
+  .then(() => {
+    console.log("databse connected");
+  })
+  .catch((err) => {
+    console.log("database connection failed");
+    console.log(err);
+  });
 
 app.listen(5000, () => {
   console.log("server is running on port 5000");
