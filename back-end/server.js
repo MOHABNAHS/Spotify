@@ -1,8 +1,10 @@
 const express = require("express");
+const cors = require("cors");
 require("dotenv").config();
 const pool = require("./db");
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // [GET] /api/songs
 app.get("/api/songs", async (req, res) => {
